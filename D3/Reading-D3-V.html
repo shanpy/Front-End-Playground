@@ -1,0 +1,294 @@
+<html>
+<head>
+	<title>Pengyin's Web Playground</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<style type="text/css">
+		.axis path,
+		.axis line {
+		  fill: none;
+		  stroke: green;
+		  shape-rendering: crispEdges;
+		}
+
+		.axis text{
+			font-size: 10px;
+			fill: green;
+		}
+	</style>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h1>Reading Notes for D3.js Part V(Chapter 9)</h1>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">Chapter 9 : Animation</h3>
+				  </div>
+				  <div class="panel-body" id="chapter9">
+				  <center>
+				  <h4>Part I</h4>
+				  <button id="btn">Click Me to Update Graph</button>
+				  <button id="add">Click Me to Add a New Bar</button>
+				  <button id="remove">Click Me to Remove a New Bar</button>
+				  <div id="dataset2"></div>
+				  <div class="part 1"></div>
+				  </div>
+				  </center>
+				  </div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+<script type="text/javascript">
+	//Code Part I: Transition Animation
+
+	//set up random data set
+	var dataset = [];
+	    var maxValue = 80;
+	    for(var count = 0; count<10; count++){
+	    	var value = Math.round(Math.random()*maxValue);
+	    	var key = Math.round(Math.random()*count*10);;
+	    	var pair = {};
+	    	pair.key = key;
+	    	pair.value = value;
+	    	dataset.push(pair);
+	    }
+
+	var key = function(d){
+		return d.key;
+	}
+	//set up svg
+	var h = 400;
+	var padding = 5;
+	
+	var svg = d3.select(document.getElementById('chapter9').getElementsByClassName('1')[0]).append('svg')
+		.attr('width','100%')
+		.attr('height',h);
+
+	var w = document.getElementsByTagName('svg')[0].offsetWidth;
+
+	//set up ordinal scale
+	var xScale = d3.scale.ordinal()
+				.domain(d3.range(dataset.length)) 
+				//return an array that has same length as dataset. Here should be 0,1,...,9
+				.rangeRoundBands([0,w],0.05); 
+				//Banding: d3 will calculate from 0 to w, how many bands it can be divided. And we set the gap between each band is 5%. We use rangRoundBands to get integer value.
+
+	var yScale = d3.scale.linear()
+					.domain([0, d3.max(dataset, function(d){return d.value;})])
+					.range([h-padding,0]);
+
+	//Create Ractangular
+	svg.selectAll('rect').data(dataset).enter().append('rect')
+		.attr('x',function(d,i) {
+			return xScale(i); //using x scale, set up i, which is the corresonding index 0,1,...10 for d.
+		})	
+		.attr('y',function(d){
+			return yScale(d.value); //y's position should be the same as before
+		})
+		.attr('width', xScale.rangeBand())//now d3 will automatically set up width of each bar, based on xScale
+		.attr('height', function(d){
+			return h-yScale(d.value); //height needs to following scale first, then using height minus
+		})
+		.attr('fill',function(d){
+		return 'rgb(120,233,' + Math.round(d.value/8*50) + ')';
+	});
+
+	//Add Tag
+	var text = svg.selectAll('text').data(dataset).enter().append('text');
+	text.text(function (d){
+		return d.value;
+	});	
+	text.attr('x',function(d,i){
+		return xScale(i)+xScale.rangeBand()/2;
+	}).attr('y',function(d){
+		return yScale(d.value) + padding*3;
+	}).attr('fill', 'pink');
+
+	//set up axis
+	var xAxis = d3.svg.axis()
+    				.scale(xScale) 
+    				.orient('top') 
+    				.ticks(10)
+    var yAxis = d3.svg.axis()
+    				.scale(yScale)
+    				.orient('right')
+    				.ticks(10);
+
+	svg.append('g').attr('class','axis xaxis')
+		.attr('transform','translate(0,'+(h-padding) + ')') 
+    	.call(xAxis);
+    svg.append('g').attr('class','axis yaxis')
+    	.attr('transform','translate(' + padding + ',0)')
+    	.call(yAxis); 
+
+
+    //Add Trigger Event for Button
+    d3.select(document.getElementById('btn')).on('click',function(){
+    	//Note: we now have new dataset
+	    var dataset2 = [];
+	    var maxValue = 80;
+	    for(var count = 0; count<dataset.length; count++){
+	    	var value = Math.round(Math.random()*maxValue);
+	    	var key = count;
+	    	var pair = {};
+	    	pair.key = key;
+	    	pair.value = value;
+	    	dataset2.push(pair);
+	    }
+
+		//update yScale to make sure y axis will change. If you change size of new dataset, you need to update x scale also!
+		yScale.domain([0, d3.max(dataset2, function(d){return d.value})]);
+
+    	//update rectange
+    	svg.selectAll('rect').data(dataset2)
+    		.transition() //add transition animation
+    		.delay(function(d,i){
+    			return i/dataset2.length * 1000;  //delay time: make each bar's animation later than previous one, proporationaly. So last one will delay 1000ms, last two will delay less than 1000ms, etc
+     		})
+    		.duration(1000) //add duration of anitmation: 1000 ms
+    		.each('start',function(){
+    			d3.select(this).attr('stroke','black'); //for each item, do this at the start of animation. Note you can not add another transition() here. If so current transition will be interrupt
+    		})
+    		.attr('x',function(d,i){
+    			return xScale(i);
+    		})
+    		.attr('y',function(d){
+    			return yScale(d.value);
+    		})
+    		.attr('height', function(d){
+    			return h-yScale(d.value);
+    		}).attr('fill', function(d){
+				return 'rgb(120,100,' + d.value*10 + ')';
+			})
+			.transition()
+			.duration(2000)
+			.attr('fill','grey'); //Since previous transition has done, You can add another transition() here.This one will not interrupt privous transition
+
+
+	    //update tag
+	    svg.selectAll('text').data(dataset2)
+	    	.transition() //add transition animation
+    		.duration(2500) //add duration of anitmation: 5000 ms
+	    		.text(function(d){
+	    			return d.value;
+	    		})
+	    		.attr('x',function(d,i){
+	    		return xScale(i)+xScale.rangeBand()/2;	
+	    		})
+	    		.attr('y',function(d){
+	    		return yScale(d.value) + padding*3; //in y axis. if you add a position number, it will go down. 
+	    		});
+
+	    //Update Axis
+	    svg.select(".xaxis").transition().duration(1000).call(xAxis);
+	    svg.select('.yaxis').transition().duration(1000).call(yAxis);
+
+    });	
+
+
+	
+
+
+	    //Code Part II: Add Or Remove Element
+
+	    d3.select(document.getElementById('add')).on('click',function(){
+	    
+
+	    /*add a new element to dataset
+	    var maxValue = 50;
+	    var newNumber = Math.round(Math.random() * maxValue);
+	    dataset.push(newNumber);
+	    */
+
+	    var maxValue = 50;
+	    var minValue = 30;
+	    	var pair = {};
+	    	pair.key = Math.round(Math.random()*minValue);
+	    	pair.value = Math.round(Math.random()*maxValue);
+	    	dataset.push(pair);
+
+	    //Update xScale since dataset change its length and max may need to change
+	    var xScale = d3.scale.ordinal()
+				.domain(d3.range(dataset.length)) 
+				.rangeRoundBands([0,w],0.05);
+		var yScale = d3.scale.linear()
+					.domain([0, d3.max(dataset, function(d){return d.value;})])
+					.range([h-padding,0]);		
+
+	    //re-select all rectangulars and create new bar element
+	    var bars = svg.selectAll('rect').data(dataset);
+	    bars.enter() //get new elements. Note: add transition() here will cause error
+	    	.append('rect') //use append() to create this new element
+ 	    	.attr('x', w) //re-define width
+	    	.attr('y',function(d){
+	    		return yScale(d.value);
+	    	})
+	    	.attr('width',xScale.rangeBand())
+	    	.attr('height', function(d){
+	    		return h-yScale(d.value);
+	    	})
+	    	.attr('fill',function(d){
+	    		return 'rgb(50,150,' + d.value*20 + ')';
+	    	});
+
+	    //Update attributes of new bar element
+	    svg.selectAll('rect')
+	    		.attr('x',function(d,i){
+	    		return xScale(i);
+	    	}).attr('y',function(d){
+	    		return yScale(d.value) + padding*3;
+	    	}).attr('width', xScale.rangeBand())
+	    	.attr('height',function(d){
+	    		return h-yScale(d.value);
+	    	});	
+
+	   //re-update tags
+	   var text = svg.selectAll('text').data(dataset,key).transition(); //note we don't need enter() and append() here because there is no new element
+	   text.text(function(d){
+	   	return d.value;
+	   });
+	   text.attr('x',function(d,i){
+	   	return xScale(i) + xScale.rangeBand()/2;
+	   }).attr('y',function(d){
+	   	return yScale(d.value) + padding*3;
+	   }).attr('fill','black');				 	
+	});
+
+	//Remove a Bar from right
+	d3.select(document.getElementById('remove')).on('click',function(){
+		dataset.shift();//remove the first element from dataset.
+
+		var bars = svg.selectAll('rect').data(dataset,key); //note you add key here to make sure key is self-defined, instead of default index
+		bars.exit() //Returns the exit selection: existing DOM elements in the current selection for which no new data element was found
+			.transition()
+			.duration(1000)
+			.attr('x', -xScale.rangeBand()) //remove from left
+			.remove(); //remove the elements in the current selection fromt the current document
+
+		//update tags
+	    var text = svg.selectAll('text').data(dataset,key);
+	   			  text.text(function(d,i){
+				   	return d.value;
+				   });
+				   text.attr('x',function(d,i){
+				   	return xScale(i) + xScale.rangeBand()/2; //after remove, i still start from 0. However the key now start from second element
+				   }).attr('y',function(d){
+				   	return yScale(d.value) + padding*3;
+				   }).attr('fill','orange');				
+	});
+
+</script>
+</body>
+</html>

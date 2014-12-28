@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pengyin's Web Playground</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h1><a href="http://blogpengyin.herokuapp.com/Reading-Notes-for-D3-js-II">Reading Notes for D3.js Part II (Chapter 6)  
+			  </a></h1>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">Chapter 6 : Draw Graph basiced on Data</h3>
+				  </div>
+				  <div class="panel-body" id="chapter6">
+				  <center>
+				  <h4>Part I</h4>
+				  <div class="1"></div>
+				  <h4>Part II</h4>
+				  <div class="2"></div>
+				  <h4>Part III</h4>
+				  <div class="3"></div>
+				  <h4>Part IV</h4>
+				  <div class="4"></div>
+				  </center>
+				  </div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+				<!--panel start-->  
+				  
+				<!--part 1-->  
+				<script type="text/javascript">
+					var dataset = [];
+						for(var i=0; i<10; i++){
+							var newNumer = Math.random() * 30;
+							dataset.push(newNumer);
+						}
+						
+						d3.select(document.getElementById('chapter6').getElementsByClassName("1")[0]).selectAll('div')
+							.data(dataset)
+							.enter()
+							.append('p')
+							.attr('class','bar')
+							.style('height',function(d){
+								var barHeight = d * 5;
+								return barHeight + "px";
+							});
+				</script>
+
+				<style type="text/css">
+					.bar{
+						display: inline-block;
+						width: 20px;
+						height: 50px;
+						background-color: teal;
+						border: 1px solid black;
+					}
+				</style>
+
+					<!--part 2-->
+
+				<script type="text/javascript">
+					var w = 300; //This is pixel
+					var h = 150;
+					var svg = d3.select(document.getElementById('chapter6').getElementsByClassName("2")[0])
+								.append('svg')
+								.attr('width',w)
+								.attr('height',h);
+					//Create size of svg
+
+					var dataset = [10,9,15,25,18,26,11,13];
+					var circles = svg.selectAll('circle') 
+						.data(dataset)
+						.enter()
+						.append('circle');
+
+					circles.attr('cx',function(d,i){
+								return (i*20)+10;
+							})
+							.attr('cy',h/2)
+							.attr('r',function(d){
+								return d;
+							})
+							.attr('fill','yellow')
+							.attr('stroke','pink');
+
+				</script>
+
+				<!--part III-->
+				<script type="text/javascript">
+				var dataset = [];
+						for(var i=0; i<10; i++){
+							var newNumer = Math.random() * 100;
+							dataset.push(Math.round(newNumer));
+						}
+
+				//create svg
+				var w = 300; //This is pixel
+				var h = 150;
+				var svg = d3.select(document.getElementById('chapter6').getElementsByClassName("3")[0])
+					.append('svg')
+					.attr('width',w)
+					.attr('height',h);
+
+				//create rectangular. Now all of them are tighting together repeatedly, without color
+				var rect = svg.selectAll('rect')
+							.data(dataset)
+							.enter()
+							.append('rect');
+
+				//Now reset the x value of each rectangular. Make the x of each rectangular's starting point(left-top) be ratio to its dataset's size. 
+				var barpadding = 1; //space between two bars
+				rect.attr('x',function(d,i){
+					return i*(w/dataset.length);
+				})
+
+				//make the `y`, which is the vertical point of alignment point, equals to `total height - its own height`
+				rect.attr('y', function(d){
+					return h-d;
+				});
+
+				//make width, height of each bar corresponding to its data
+				rect.attr('width', (w / dataset.length-barpadding));
+				rect.attr('height',function(d){
+					return d;
+				});
+
+				//add color to rectangular. Make each bar has color ratio to its data
+				rect.attr('fill',function(d){
+					var color = d*6;
+					return("rgb(100, 100, "+color+")");
+				});
+				
+				//add Tag
+
+				//create text
+				var text = svg.selectAll('text')
+					.data(dataset)
+					.enter()
+					.append('text');
+
+			    //set text position. Adjust position a little bit
+				text.attr('x',function(d,i){
+					return i*(w/dataset.length)+5;
+				})
+
+				text.attr('y', function(d){
+					return h-(d+5);
+				});
+
+				//add text value
+				text.text(function(d){
+				return d; //Get integer value in JavaScript
+				})
+
+				//set font family
+				text.attr('font-family','sans-serif')
+					.attr('font-size','1em')
+					.attr('fill','blue')
+					.attr('text-anchor','right'); //set text alignment
+
+				</script>
+
+
+				<!--part IV-->
+				<script type="text/javascript">
+				//prepare data
+				var dataset = [
+								[5,10],
+								[115,130],
+								[40,40],
+								[160,100],
+								[199,135]
+								];
+
+				//create svg element
+				var w = 300; //This is pixel
+				var h = 150;
+				var svg = d3.select(document.getElementById('chapter6').getElementsByClassName("4")[0])
+					.append('svg')
+					.attr('width',w)
+					.attr('height',h);
+
+				//create circles
+				var circle = svg.selectAll('circle')
+								.data(dataset)
+								.enter()
+								.append('circle');
+
+				//set up cx, cy, r
+				circle.attr('cx',function(d){ //Here, d is the single array in array group
+					return d[0]; //note it should be first element in array
+				}).attr('cy',function(d){
+					return h-d[1]; //y should be second element in array
+				});
+
+				//Make area of circle be proportional to data, using A = π*r^2. We just assume y is the area here
+				circle.attr('r',function(d){
+					return Math.sqrt(d[1]/3.14) + 5;
+				}).attr('fill','pink');
+
+				//Add Tags
+				var text = svg.selectAll('text')
+					.data(dataset)
+					.enter()
+					.append('text');
+
+				text.text(function(d){
+					return d[0] + "," + d[1];
+				});
+
+				text.attr('x',function(d){
+					return d[0];
+				})
+				text.attr('y',function(d){
+					return h-d[1];
+				})
+				</script>
+				<!--panel end-->
+
+				  
+</body>
+</html>

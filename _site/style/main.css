@@ -1,0 +1,20 @@
+body{
+	background-color: #dfe3ee; 
+}
+.main{
+	background-color: white;
+}
+.jumbotron, .panel{
+	margin-top: 1em;
+}
+.homeButton{
+	text-align: center;
+}
+.part{
+	margin: 1em;
+	padding: 1em;
+	border: 1px solid #8b9dc3;
+}
+.h3,h4,h5{
+	text-align: center;
+}

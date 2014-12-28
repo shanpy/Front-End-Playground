@@ -1,0 +1,223 @@
+<html>
+<head>
+	<title>Pengyin's Web Playground</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<style type="text/css">
+		.axis path,
+		.axis line {
+		  fill: none;
+		  stroke: green;
+		  shape-rendering: crispEdges;
+		}
+
+		.axis text{
+			font-size: 10px;
+			fill: green;
+		}
+
+	</style>
+	<!--style sheet for interactive design-->
+	<style type="text/css">	
+		rect:hover{
+			fill:orange;
+			-moz-transition: all 0.3s;
+			-o-transition: all 0.3s;
+			-webkit-transition: all 0.3s;
+			transition: all 0.3s;        
+		}
+
+		#tooltip{
+			position: absolute;
+			width: 10em;
+			height: auto;
+			padding: 1em;
+			background-color: white;
+			-webkit-border-radius: 5px;
+			-mox-border-radius: 5px;
+			border-radius: 5px;
+			-webkit-box-shadow: 3px 3px 3px rgba(0,0,0,0.5);
+			-moz-box-shadow: 3px 3px 3px rgba(0,0,0,0.5);
+			box-shadow: 3px 3px 3px rgba(0,0,0,0.5);
+			pointer-events:none;
+		}
+
+		#tooltip.hidden{
+			display: none;
+		}
+
+		#tooltip p{
+			margin: 0;
+		}
+	</style>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h1>Reading Notes for D3.js Part VI(Chapter 10)</h1>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">Chapter 10 : Interactive Design</h3>
+				  </div>
+				  <div class="panel-body" id="chapter10">
+				  <center>
+				  <h4>Part I</h4>
+				  <div id="dataset2"></div>
+				  <div class="part 1"></div>
+				  </div>
+				  </center>
+				  </div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+	//create key-value pair dataset
+	var dataset = [];
+	var base1 = 80;
+	var base2 = 50;
+	for(var count=0;count<10;count++){
+		var pair = {};
+		pair.value = Math.round(Math.random()*base1);
+		pair.key = Math.round(Math.random()*base2);
+		dataset.push(pair);
+	}
+
+	//set up svg
+	var h = 400;
+	var padding = 5;
+	var svg = d3.select(document.getElementById('chapter10').getElementsByClassName('1')[0]			).append('svg')
+				.attr('width','100%')
+				.attr('height',h);
+	var w = document.getElementsByTagName('svg')[0].offsetWidth;
+
+	//set up scale
+	var xScale = d3.scale.ordinal()
+					.domain(d3.range(dataset.length))
+					.rangeRoundBands([0,w],0.05);
+	var yScale = d3.scale.linear()
+					.domain([0,d3.max(dataset,function(d){
+						return d.value;
+					})])	
+					.range([h-padding,0]);
+
+	//set up bar chart
+	var rect = svg.selectAll('rect').data(dataset).enter().append('rect')
+					.attr('x', function(d,i){
+						return xScale(i);
+					})			
+					.attr('y', function(d){
+						return yScale(d.value) - padding;
+					})
+					.attr('width',function(d,i){
+						return xScale.rangeBand();
+					})
+					.attr('height',function(d){
+						return h-yScale(d.value);
+					})
+					.attr('fill',function(d){
+						return "rgb(120,150," + d.value*5 + ')';
+					});		
+	rect.on('click', function(){
+						sortBars(); //add a clickable function to it, sorting
+					});
+
+	//set up tags
+	var text = svg.selectAll('text').data(dataset).enter().append('text');
+	text.text(function(d){
+		return d.value;
+	});
+	text.attr('x',function(d,i){
+		return xScale(i) + xScale.rangeBand()/2;
+	}).attr('y',function(d){
+		return yScale(d.value)+padding*3;
+	}).attr('fill','black')
+	.attr('class','tags');	//add class for easier sorting
+
+
+	//set up axis. Note if axis should be added as last step, otherwise it will mess up tags, and be covered by bars
+	var xAxis = d3.svg.axis()
+					.scale(xScale)
+					.orient('top')
+					.ticks(10);
+	var yAxis = d3.svg.axis()
+					.scale(yScale)
+					.orient('right')
+					.ticks(10);										
+	svg.append('g').attr('class','axis xaxis').attr('transform','translate(0,'+(h-padding)+')').call(xAxis);
+	svg.append('g').attr('class','axis yaxis').attr('transform','translate('+padding/2+')').call(yAxis);	
+
+
+	//sortBar method
+	var sortBars = function(){
+			//sort rect
+		 svg.selectAll('rect')
+			.sort(function(a,b){
+				//Important: Use a.value here if your dataset is key/value pair!
+				return d3.ascending(a.value,b.value); //if pass two parameter a,b, sort them using ascending order
+			}) //default is ascending order
+			.transition()
+			.duration(500)
+			.attr('x',function(d,i){
+				return xScale(i); //after sort, re-asign x value
+			}).attr('fill',function(d){
+						return "rgb(200,150," + d.value*5 + ')';
+					});
+
+			//sort tags
+			svg.selectAll(".tags")//selectAll for class name in D3
+				.sort(function(a,b){
+					return d3.ascending(a.value,b.value);
+				}).transition()
+				.duration(500)
+				.attr('x',function(d,i){
+					return xScale(i) + xScale.rangeBand()/2; //after sort, re-asign x value
+				}).attr('fill',function(d){
+							return 'blue';
+						});
+	}
+
+
+	//Add HTML Reminder
+	rect.on('mouseover',function(d){
+		//get reminder's x and y value
+
+		//get current current x value and add rangeBand
+		var xPosition = parseFloat(d3.select(this).attr('x')) + xScale.rangeBand()/2;
+		var yPosition = parseFloat(d3.select(this).attr('y')) + h;
+		window.console.log(d3.select(this).attr('x') + " " + d3.select(this).attr('y'));
+
+		//create a div to hold reminder. Style for this div is on top
+		var newDiv = document.createElement('div');
+		newDiv.setAttribute('id','tooltip');
+		newDiv.setAttribute('class','hidden');
+		newDiv.innerHTML = '<p><strong>Percentage</strong></p><p><span id="value">100</span>%</p>';
+		document.getElementById('chapter10').getElementsByClassName('1')[0].appendChild(newDiv);
+
+		//create new reminder
+		d3.select('#tooltip').style('left',xPosition + 'px')
+							.style('top', yPosition + 'px')
+							.select('#value')
+							.text(d.value); //select id as value, then assign d.value to it
+		//now show tooltip
+		d3.select('#tooltip').classed('hidden',false);
+	});
+
+	//If mouse move out, hide tooltip
+	rect.on('mouseout',function(){
+		d3.select('#tooltip').classed('hidden',true); //re-add class by using classed()
+	});
+
+	</script>
+</body>
+</html>

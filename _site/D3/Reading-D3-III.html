@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pengyin's Web Playground</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h1><a href="http://blogpengyin.herokuapp.com/Reading-Notes-for-D3-js-II">Reading Notes for D3.js Part III (Chapter 7)  
+			  </a></h1>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">Chapter 7 : Scale</h3>
+				  </div>
+				  <div class="panel-body" id="chapter7">
+				  <center>
+				  <h4>Part I</h4>
+				  <div class="part 1"></div>
+				  <h4>Part II</h4>
+				  <div class="part 2"></div>
+				  </center>
+				  </div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+
+	<!--Part I-->
+	<script type="text/javascript">
+	var scale = d3.scale.linear(); //Now scale is a function for linear scale
+
+	scale.domain([100,500]); //set up input domain
+
+	scale.range([10,350]); //set up output range
+
+	//now scale(100) will return 10, scale(300) will return 180
+	</script>
+
+	<!--Part II-->
+	<script type="text/javascript">
+	var w = 400;
+	var h = 250;
+    //Add padding to make sure circle will not be cut to half
+    var padding = 50;
+
+	var dataset = [
+				[50,50],[20,120],[74,35],[85,85],[60,99]
+				];
+
+	//X Axis: Make input domain be max in dataset, based on x value. Output range is the width of SVG			
+	var xScale = d3.scale.linear()
+					.domain([0, d3.max(dataset, function(d){ return d[0];})])
+					.range([5,w-padding]);	
+
+	//Y Axis: Make input range be max in dataset, based on y value. Output range is the height of SVG 
+	var yScale = d3.scale.linear()
+					.domain([0, d3.max(dataset, function(d){ return d[1];})])
+					.range([h-padding,5]);	//Note normally larger y is at bottom. We change to make larger y on top
+    
+    //Radius: Make a self defined scale so that the radius is between 2 and 5, but still show scales
+    var rScale = d3.scale.linear()
+    				.domain([0, d3.max(dataset, function(d){ return d[1];})])
+    				.range([2,5]);
+
+	
+	//Create SVG and Add Border to it
+	var svg = d3.select(document.getElementById("chapter7").getElementsByClassName('2')[0])
+				.append('svg')
+				.attr('width',w)
+				.attr('height',h);
+				
+	//create a scatter plot 
+	var circle = svg.selectAll('circle')
+			.data(dataset)
+			.enter()	
+			.append('circle');
+
+	//Set cx, cy to new value based on scale				
+	circle.attr('cx',function(d){
+		return xScale(d[0]);
+	});
+
+	circle.attr('cy',function(d){
+		window.console.log(yScale(d[1]));
+		return yScale(d[1]);
+	});
+
+	circle.attr('r',function(d){
+		return rScale(d[1]);
+	});
+
+	circle.attr('fill','green');
+
+	//Set tag based on scale
+	var text = svg.selectAll('text')
+					.data(dataset)
+					.enter()
+					.append('text');
+
+	text.text(function(d){
+					return d[0] + "," + d[1];
+				});	
+
+	text.attr('x',function(d){
+		return xScale(d[0]);
+	});
+	text.attr('y',function(d){
+		return yScale(d[1]);
+	});
+	text.attr('fill','pink');
+	
+	//Now if svg change, the position of circles will adjust automatically
+	</script>
+</body>
+</html>

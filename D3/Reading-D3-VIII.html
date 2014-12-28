@@ -1,0 +1,264 @@
+<html>
+<head>
+	<title>Pengyin's Web Playground</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<style type="text/css">
+		.axis path,
+		.axis line {
+		  fill: none;
+		  stroke: green;
+		  shape-rendering: crispEdges;
+		}
+
+		.axis text{
+			font-size: 10px;
+			fill: green;
+		}
+
+	</style>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+	<!--Style for Part I-->
+	<style type="text/css">
+	.1 path{
+		fill:green;
+	}
+	</style>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h1>Reading Notes for D3.js Part VIII(Chapter 12)</h1>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  <div class="panel-heading">
+				    <h3 class="panel-title">Chapter 12 : Map</h3>
+				  </div>
+				  <div class="panel-body" id="chapter12">
+				  <center>
+				  <button onclick="part1()">Check Part 1</button>
+				  <button onclick="part2()">Check Part 2</button>
+				  <button onclick="part3()">Check Part 3</button>
+				  <h4>Part I</h4>
+				  <div class="part 1"></div>
+				  <h4>Part II</h4>
+				  <div class="part 2"></div>
+				  <h4>Part III</h4>
+				  <div class="part 3"></div>
+				  </div>
+				  </center>
+				  </div>
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+	//Part I Code
+	function part1(){
+	//create svg
+	var h = 500;
+	var padding = 5;
+	var svg = d3.select(document.getElementById('chapter12').getElementsByClassName('1')[0]).append('svg').attr('width','100%').attr('height',h);
+	var w = document.getElementsByTagName('svg')[0].offsetWidth;
+
+	//set a path generator
+	var path = d3.geo.path();
+
+	//load map json file. Since this is a callback function, code outside will run the same time as inside
+	d3.json('/data/us-states.json',function(json){
+		svg.selectAll('path')
+			.data(json.features)
+			.enter()
+			.append('path')
+			.attr('d',path); //This line will create a path generator to get all geography data and generate svg path
+	});
+
+	//Apply scale and Use projection to let map cover all states in US, using a build-in projector albersUsa()
+	var projection = d3.geo.albersUsa()
+							.translate([w/2,h/2])//Make projection to the center of svg
+							.scale([500])//make map smaller. Default value is 1000.
+	var path = d3.geo.path().projection(projection); //Apply new projection to current path;						
+	}
+	
+
+	//Part II Code
+	function part2(){
+	//Create svg
+	var h = 500;
+	var padding = 5;
+	var svg = d3.select(document.getElementById('chapter12').getElementsByClassName('2')[0]).append('svg').attr('width','100%').attr('height',h);
+	var w = document.getElementsByTagName('svg')[0].offsetWidth;
+
+
+	//Create a scale with different color for quantize map. Here we devide color to 6 groups. You can set your own.
+	//Color reference: https://github.com/mbostock/d3/tree/master/lib/colorbrewer
+	var colorBrew = ['rgb(237,248,251)','rgb(204,236,230)','rgb(153,216,201)','rgb(102,194,164)','rgb(44,162,95)','rgb(0,109,44)'];
+	var color = d3.scale.quantize()
+					.range(colorBrew); //We need to wait till data finish loading to add input domain
+
+
+	//Set up path generator
+	var path = d3.geo.path();
+
+
+	//Load data
+	d3.csv('/data/us-ag-productivity-2004.csv',function(data){
+		color.domain([
+				//set up input domain after data has been loaded
+				d3.min(data,function(d){return d.value;}),
+				d3.max(data,function(d){return d.value;})
+			]);
+
+		//Add csv data to json because we can only bind one group of data to elements. 
+		//Note you need to do this in d3.csv() because this step rely on csv data
+		d3.json('/data/us-states.json',function(json){
+			
+			//Mix data in csv file
+			for(var i=0; i<data.length; i++){
+				var dataState = data[i].state; //get state name in csv file
+				var dataValue = parseFloat(data[i].value); //get value in csv file. Note the column of csv file is state and value
+
+				for(var j=0; j<json.features.length; j++){
+					var jsonState = json.features[j].properties.name; //Find state name in json file
+
+					if(jsonState == dataState){
+						//copy csv value to json file, make a key as value
+						json.features[j].properties.value = dataValue;
+						//go out for loop. we don't need to check more state in json file.
+						break; 
+					}
+				}
+			}
+
+			//Now create path and apply data
+			svg.selectAll('path')
+				.data(json.features)
+				.enter()
+				.append('path')
+				.attr('d', path)
+				.style('fill',function(d){
+					var value = d.properties.value;
+					if(value){ //check if value exist or not
+						return color(value);
+					}else{
+						return "grey";
+					}
+				});					
+			});	
+	});	
+
+	//Add Projector
+	var projection = d3.geo.albersUsa()
+							.translate([w/2,h/2])//Make projection to the center of svg
+							.scale([500])//make map smaller. Default value is 1000.
+	path.projection(projection);
+}
+	
+
+	//Part III Code
+	function part3(){
+		//create svg
+		var h = 500;
+		var padding = 5;
+		var svg = d3.select(document.getElementById('chapter12').getElementsByClassName('3')[0]).append('svg').attr('width','100%').attr('height',h);
+		var w = document.getElementsByTagName('svg')[0].offsetWidth;
+
+		//create projector
+		var proj = d3.geo.albersUsa().translate([w/2,h/2]).scale([500]);
+
+		//create path generator
+		var path = d3.geo.path();
+
+		//create color brew
+		var colorBrew = ["#ffffd4","#fed98e","#fe9929","#d95f0e","#993404"]; //This time use 5 groups. Color effect will be different from example 2
+		var color = d3.scale.quantize().range(colorBrew);
+
+		//load population change.csv file
+		d3.csv('/data/us-ag-productivity-2004.csv',function(data){
+				
+				//set color input domain
+				color.domain(
+					[d3.min(data, function(d){return d.value;}), 
+					 d3.max(data, function(d){return d.value;})]
+					);
+
+				//Combine data in csv to data in json
+				d3.json('/data/us-states.json', function(data2){
+					for(var i=0; i<data.length; i++){
+						var dataState = data[i].state;
+						var dataValue = parseFloat(data[i].value);
+
+						for(var j=0; j<data2.features.length; j++){
+						var data2State = data2.features[j].properties.name;
+						if(dataState == data2State){
+							data2.features[j].properties.value = dataValue;
+							break;
+						}
+						}
+					}
+
+
+
+					//Draw map and add color,projector
+				svg.selectAll('path').data(data2.features).enter().append('path')
+					.attr('d',path).style('fill',function(d){
+					var value = d.properties.value; //note since we use data2.features as dataset, here d is equal to data2.features single item
+					if(value){ 
+						return color(value);
+					}else{
+						return "black";
+					}
+				});		
+				
+				//load csv data from us cities.csv. Make sure you do this in data callback function so that circle is on top of map. Otherwise circle will be covered by map				
+				d3.csv('/data/us cities.csv',function(data3){
+					//create circle that represetns city, then apply projector to it
+					svg.selectAll('circle').data(data3).enter()
+						.append('circle')
+						//ImportantL proj(lon,lat) will return a array of two
+						.attr('cx',function(d){
+							return proj([d.lon, d.lat])[0]; //0 postion is longitude
+						}).attr('cy',function(d){
+							return proj([d.lon, d.lat])[1]; //1 position is latitude.
+						}).attr('r',function(d){
+							return Math.sqrt(parseInt(d.population) * 0.00004); //use sqrt to get r from coverage of population
+						}).attr('fill','green')
+						.attr('opacity',0.75);
+				}); 
+				});
+		});
+
+				//apply projector
+				path.projection(proj);
+				//Important! When you use projection for full map(i.e, all paths), you must do this out side data callback function!
+
+				
+	}
+	</script>
+
+
+</body>
+</html>	
+
+
+
+
+
+
+
+
+
+
+
+
+
