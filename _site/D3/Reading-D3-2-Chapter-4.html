@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pengyin's Front End Playground</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../style/main.css">
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row">		
+		<div class="col-sm-offset-2 col-md-offset-2 col-lg-offset-2 col-xs-12 col-sm-8 col-md-8 col-lg-8 main">
+			<div class="page-header">
+			  <button class="btn btn-info homeButton" onclick="window.location='/index.html'">Home</button>
+			  <h3>Reading Notes Date Virtualization with d3.js, published by Packt Publishing</h3>
+			  <h5>Please view page source to get code and useful comments</h5>
+			</div>
+			
+			<div class='part'>
+				<div class="panel panel-default">
+				  
+				  <div class="panel-heading">
+				    <h4 class="panel-title">Chapter 4 : Making Things Move</h4>
+				  </div>
+
+				  <div class="panel-body" id="chapter4">
+				  <center>
+				  <button onclick="part1()">Check Part 1</button>
+				  <button onclick="part2()">Check Part 2</button>
+				  <button onclick="part3()">Check Part 3</button>
+				  <h4>Part I</h4>
+				  <div class="part 1"></div>
+				  <h4>Part II</h4>
+				  <div class="part 2"></div>
+				  <h4>Part III</h4>
+				  <div class="part 3"></div>
+				  </center>
+				  </div>
+				
+				</div>
+			</div>
+		</div>
+		</div>
+	</div>
+<script type="text/javascript">
+	function part1() {
+		//Create SVG
+		var h = 500;
+		var padding = 5;
+		var svg = d3.select(document.getElementById('chapter4').getElementsByClassName('1')[0]).append('svg').attr('width','100%').attr('height',h);
+
+		var w = svg.getOffsetWidth;
+
+		//Interpolators
+		d3.select("svg").append('text')
+			.attr({x:50, y:50})
+			.text("I'm growing")
+			.transition()
+			.styleTween('font',function(){
+				return d3.interpolate(
+				'2px Helvetica', '28px Comic Sans MS');
+			});
+		}
+
+		function part2(){
+		//Create SVG
+		var h = 500;
+		var padding = 5;
+		var svg = d3.select(document.getElementById('chapter4').getElementsByClassName('1')[0]).append('svg').attr('width','100%').attr('height',h);
+
+		//Data
+		var eases = ['linear','ploy(4)','quad', 'cubic', 'sin', 'exp',
+		'circle','elastic(10,-5)'];
+
+		//Easing
+		y = d3.scale.ordinal().domain(eases).rangeBands([50,500]);
+		}
+</script>	
+</body>
+</html>	
