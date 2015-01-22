@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Pengyin's Front End Playground</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="container-fluid">
+<div class="row">
+<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<ul>
+<li>main function</li>
+<li>function: generate seats based on data</li>
+<li>function for: add SVG/rect in specific div, with stroke color</li>
+<li>Function for: Drag and Drop pre-defined rects to this div (disappear if left, appear if add)</li>
+<li>Function for: make some seats invalid</li>
+<li>function: assign filled color based on click</li>
+<li>function: output result data - JSON</li>
+</ul>
+
+Row: <input id="row" type="number"/>
+<br/>
+Column: <input id="column" type="number"/>
+<br/>
+<button onclick="initialize()">Initialize Seat Chart</button>
+<div class="row">
+<div id="test" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="height: 500px; border:1px solid black;"></div>
+</div>
+
+</div>
+</div>
+</div>
+<script>
+//Test Data
+var selection = ["Person A", "Person B", "Person C", "Person D"];
+
+//Client Side: initialize step - call main function
+function initialize(){
+	var row = document.getElementById("row").value;
+	var column = document.getElementById("column").value;
+
+	generateSeatChart("test", row, column, selection);	
+}
+
+//Main function
+	function generateSeatChart(id, row, column, selection){
+	if(row == null || column == null){
+		window.alert("Please enter number!");
+	}
+	else{		
+	//Create SVG based on Id
+	var svg = d3.select(document.getElementById(id))
+				.append('svg')
+				.attr("height", document.getElementById(id).offsetHeight)
+				.attr("width", "100%")
+				.attr("id","chartSVG");
+
+	generateChart(svg, id, row, column);
+	generateSelection(svg, id, selection, row, column);
+	}
+}
+
+//Generate Seat Chart
+function generateChart(svg, id,row,column){
+
+	//Create total number of seats
+	var seats = {};
+	var rows = [];
+	var columns = [];
+	for(var i=0; i<column; i++){
+		columns.push(i);
+	}
+	for(var j=0; j<row; j++){
+		rows.push(j);
+	}
+	seats.columns = columns;
+	seats.rows = rows;
+
+	//Generate Scale based on onRow and onColumn
+	/**
+	var xScale = d3.scale.ordinal()
+					.domain(d3.range(column))
+					.rangeRoundBands([0,w],0.05);
+	var yScale = d3.scale.ordinal()
+					.domain(d3.range(row))
+					.rangeRoundBands([0,h],0.05);
+	**/
+
+
+	//create outside rect 
+	var w = document.getElementById(id).offsetWidth*80/100;
+	var h = document.getElementById(id).offsetHeight;
+	for(var c = 0; c<row; c++){
+		for(var c2 = 0; c2<column; c2++){
+				svg.append('rect')
+				.attr('x', c2*(w/column))
+				.attr('y', c*(h/row))
+				.attr('width', w/column)
+				.attr('height', h/row)
+				.attr('stroke','red')
+				.attr("fill", "none");
+		}
+	}
+}
+
+
+//Generate rects for drag and drop. Assume padding between two column is 3% of whole width
+function generateSelection(svg, id, selection, row, column){	
+	//get svg available area
+	var h = document.getElementById(id).offsetHeight;
+	var w = document.getElementById(id).offsetWidth;
+	var padding = w*3/100;
+	var start = w*80/100 + padding;
+
+	for(var c=0; c<selection.length; c++){
+		svg.append('rect')
+			.attr('x', start)
+			.attr('y', c*(h/selection.length) + padding)
+			.attr('width', w*20/100-2*padding)
+			.attr('height', h/selection.length - padding)
+			.attr('stroke','blue')
+			.attr("fill", "none");
+
+		svg.append('text')
+			.text(selection[c])
+			.attr('x', start + padding)
+			.attr('y', c*(h/selection.length) + padding*2)	
+			.attr('fill', 'green');
+	}
+
+
+}
+
+function addRect(id){
+
+		//Check if id has svg, if so, check if has rect
+
+
+		//If has svg and has rect, add rect near it, same size
+
+
+		//If has svg and no rect, add rect, full size of svg
+}	
+
+function initializeSeat(){
+
+}
+
+//Default: Linear Scale for x, Linear Scale for y
+function tool_createScale(h,w,row, column){
+}			
+
+</script>
+</body>
+</html>
