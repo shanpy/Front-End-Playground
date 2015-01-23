@@ -34,7 +34,13 @@ Column: <input id="column" type="number"/>
 </div>
 <script>
 //Test Data
-var selection = ["Person A", "Person B", "Person C", "Person D"];
+var selection = [{
+				"Person A" : "N", 
+				"Person B" : "N", 
+				"Person C" : "N",
+				"Person D" : "N",
+				"Person E" : "N"
+				}];
 
 //Client Side: initialize step - call main function
 function initialize(){
@@ -50,15 +56,20 @@ function initialize(){
 		window.alert("Please enter number!");
 	}
 	else{		
-	//Create SVG based on Id
-	var svg = d3.select(document.getElementById(id))
-				.append('svg')
-				.attr("height", document.getElementById(id).offsetHeight)
-				.attr("width", "100%")
-				.attr("id","chartSVG");
-
-	generateChart(svg, id, row, column);
-	generateSelection(svg, id, selection, row, column);
+		if(document.getElementById("chartSVG")!=null){
+			document.getElementById("chartSVG").innerHTML = "";
+		}	
+		else{
+		//Create SVG based on Id
+		var svg = d3.select(document.getElementById(id))
+					.append('svg')
+					.attr("height", document.getElementById(id).offsetHeight)
+					.attr("width", "100%")
+					.attr("id","chartSVG");
+		}
+		generateChart(svg, id, row, column);
+		generateSelection(svg, id, selection, row, column);
+		//dragDropSetting();
 	}
 }
 
@@ -92,6 +103,7 @@ function generateChart(svg, id,row,column){
 	//create outside rect 
 	var w = document.getElementById(id).offsetWidth*80/100;
 	var h = document.getElementById(id).offsetHeight;
+	var idCount = 0;
 	for(var c = 0; c<row; c++){
 		for(var c2 = 0; c2<column; c2++){
 				svg.append('rect')
@@ -99,8 +111,18 @@ function generateChart(svg, id,row,column){
 				.attr('y', c*(h/row))
 				.attr('width', w/column)
 				.attr('height', h/row)
+				.attr('id', idCount+1)
+				.attr('class', 'availableSeats')
 				.attr('stroke','red')
 				.attr("fill", "none");
+
+				svg.append('text')
+					.attr('x', c2*(w/column) + 	w/column/2)
+					.attr('y', c*(h/row) + h/row/2)
+					.text(idCount+1)
+					.attr('fill','red');
+
+				idCount ++;
 		}
 	}
 }
@@ -114,23 +136,143 @@ function generateSelection(svg, id, selection, row, column){
 	var padding = w*3/100;
 	var start = w*80/100 + padding;
 
-	for(var c=0; c<selection.length; c++){
+
+	var obj = Object.keys(selection[0]).length;
+	for(var c=0; c<obj; c++){
+
 		svg.append('rect')
 			.attr('x', start)
-			.attr('y', c*(h/selection.length) + padding)
-			.attr('width', w*20/100-2*padding)
-			.attr('height', h/selection.length - padding)
+			.attr('y', c*(h/obj) + padding)
+			.attr('width', w*20/100)
+			.attr('height', (h/obj) - padding)
 			.attr('stroke','blue')
-			.attr("fill", "none");
+			.attr("fill", "green")
+			.attr("id", Object.keys(selection[0])[c])
+			.attr("class", "draggable")
+			.attr('onmousedown', 'startDrag(evt)')
+			.attr('onmousemove', 'drag(evt)')
+			.attr('onmouseup', 'endDrag(evt)');
 
 		svg.append('text')
-			.text(selection[c])
+			.text(Object.keys(selection[0])[c])
 			.attr('x', start + padding)
-			.attr('y', c*(h/selection.length) + padding*2)	
-			.attr('fill', 'green');
+			.attr('y', c*(h/obj) + 2*padding)	
+			.attr('fill', 'white')
+			.attr('class','draggableText');
+	}
+}
+
+
+var TransformRequestObj
+var TransList
+var DragTarget=null;
+var Dragging = false;
+var OffsetX = 0;
+var OffsetY = 0;
+function startDrag(evt)
+{
+    if(!Dragging) //---prevents dragging conflicts on other draggable elements---
+    {
+        DragTarget = evt.target;
+        //---bring this viewPort to top---
+        if(DragTarget.ownerSVGElement!=	chartSVG)
+            chartSVG.appendChild(DragTarget.ownerSVGElement)
+        //---bring this element to top---
+        DragTarget.ownerSVGElement.appendChild(DragTarget)
+
+        //---reference point to its respective viewport--
+        var pnt = DragTarget.ownerSVGElement.createSVGPoint();
+        pnt.x = evt.clientX;
+        pnt.y = evt.clientY;
+        //---elements transformed and/or in different(svg) viewports---
+        var sCTM = DragTarget.getScreenCTM();
+        var Pnt = pnt.matrixTransform(sCTM.inverse());
+
+        TransformRequestObj = DragTarget.ownerSVGElement.createSVGTransform()
+        //---attach new or existing transform to element, init its transform list---
+        var myTransListAnim=DragTarget.transform
+        TransList=myTransListAnim.baseVal
+
+        OffsetX = Pnt.x
+        OffsetY = Pnt.y
+
+        Dragging=true;
+    }
+}
+function drag(evt)
+{
+    if(Dragging)
+    {
+        var pnt = DragTarget.ownerSVGElement.createSVGPoint();
+        pnt.x = pnt.getBoundingClientRect().offsetLeft;
+        pnt.y = pnt.getBoundingClientRect().offsetTop;
+        //---elements in different(svg) viewports, and/or transformed ---
+        var sCTM = DragTarget.getScreenCTM();
+        var Pnt = pnt.matrixTransform(sCTM.inverse());
+        Pnt.x -= OffsetX;
+        Pnt.y -= OffsetY;
+
+        TransformRequestObj.setTranslate(Pnt.x,Pnt.y)
+        TransList.appendItem(TransformRequestObj);
+        TransList.consolidate();
+    }
+}
+
+var ViewPortTarget
+//--mouse up---
+function endDrag(evt)
+{
+    Dragging = false;
+    
+    var closestRect = findLocation(evt.offsetLeft, evt.offsetTop);
+    window.console.log(closestRect);
+}
+
+/*
+function dragDropSetting(){
+	var drag = d3.behavior.drag()
+				.on('dragend', function(){
+				  var closestRect = findLocation(this.clientX, this.clientY);
+   				 window.console.log(closestRect);
+				});
+
+	d3.selectAll('.draggable').call(drag);
+}
+*/
+
+//Get all available rects, with x and y
+//Then get the one that has least difference with passed x and y
+//return this element
+function findLocation(x,y){
+	window.console.log("now: " + x + " " + y);
+
+	var availableSeats = document.getElementsByClassName("availableSeats");
+	var minArray = [];
+	var finalRect;
+	//Get difference
+	for(var i=0; i<availableSeats.length; i++){
+		var current = availableSeats[i];
+		var currentX = current.getAttribute('x');
+		var currentY = current.getAttribute('y');
+		window.console.log("client: " + currentX + " " + currentY);
+		var minRect = {
+			"rect": current,
+			"num": Math.sqrt((currentX-x)^2+(currentY-y)^2)
+		};
+		minArray.push(minRect);
 	}
 
 
+    //Find closest rect
+    var minObj = minArray[0];
+    for(var j=0; j<minArray.length-1; j++){
+    	if(minObj.num > minArray[j+1].num){
+    		minObj = minArray[j+1];
+    	}
+    }
+
+    finalObj = minObj;
+    return finalObj.rect;
 }
 
 function addRect(id){
@@ -143,15 +285,6 @@ function addRect(id){
 
 		//If has svg and no rect, add rect, full size of svg
 }	
-
-function initializeSeat(){
-
-}
-
-//Default: Linear Scale for x, Linear Scale for y
-function tool_createScale(h,w,row, column){
-}			
-
 </script>
 </body>
 </html>
